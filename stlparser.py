@@ -1,4 +1,5 @@
 import struct
+import matplotlib
 
 normals = []
 points = []
@@ -7,11 +8,15 @@ bytecount = []
 
 fb = []
 
+# from (will be modified soon)
+# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file
 def unpack(f, sig, l):
     s = f.read(l)
     fb.append(s)
     return struct.unpack(sig, s)
 
+# from (will be modified soon)
+# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
 def read_triangle(f):
     n = unpack(f, "<3f", 12)
     p1 = unpack(f, "<3f", 12)
@@ -27,13 +32,19 @@ def read_triangle(f):
     triangles.append((l, l+1, l+2))
     bytecount.append(b[0])
 
+# from (will be modified soon)
+# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
 def read_length(f):
     length = struct.unpack("@i", f.read(4))
     return length[0]
 
+# from (will be modified soon)
+# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
 def read_header(f):
     f.seek(f.tell()+80)
     
+# from (will be modified soon)
+# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
 def write_as_ascii(outfilename):
     f = open(outfilename, "w")
     f.write("solid "+outfilename+"\n")
@@ -47,7 +58,9 @@ def write_as_ascii(outfilename):
         f.write("endfacet\n")
     f.write("endsolid "+outfilename+"\n")
     f.close()
-    
+
+# from (will be modified soon)
+# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
 def main():
     f = open("Part1.STL", "rb")
     
