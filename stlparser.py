@@ -1,48 +1,60 @@
+"""
+This module provides basic STL parsing, saving, displaying, and post-processing capabilities
+
+File format described at http://people.sc.fsu.edu/~jburkardt/data/stlb/stlb.html
+Bytecount described at http://en.wikipedia.org/wiki/STL_(file_format)
+Help and original code from: http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file
+"""
+
 import struct
 import matplotlib
 
-normals = []
-points = []
-triangles = []
-bytecount = []
+class SolidSTL( object ):
+    NORM = 0
+    VERTEX1 = 1
+    VERTEX2 = 2
+    VERTEX3 = 3
+    BYTECOUNT = 4
 
-fb = []
+    def __init__(self, title=None, numFacets=0, facets=None):
+        self.title = title
+        self.numFacets = numFacets
+        self.facets = facets        
 
-# from (will be modified soon)
-# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file
-def unpack(f, sig, l):
-    s = f.read(l)
-    fb.append(s)
-    return struct.unpack(sig, s)
+def parseBSTL(bstl):
+    """
+    Loads triangles from file, input can be a file path or a file handler
+    Returns a SolidSTL object
+    """
 
-# from (will be modified soon)
-# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
-def read_triangle(f):
-    n = unpack(f, "<3f", 12)
-    p1 = unpack(f, "<3f", 12)
-    p2 = unpack(f, "<3f", 12)
-    p3 = unpack(f, "<3f", 12)
-    b = unpack(f, "<h", 2)
+    try:
+        if isinstance(bstl, file):
+            f = bstl
+        elif isinstance(bstl, str):
+            f = open(bstl, 'rb')
+        else:
+            raise TypeError("must be a string or file")
 
-    normals.append(n)
-    l = len(points)
-    points.append(p1)
-    points.append(p2)
-    points.append(p3)
-    triangles.append((l, l+1, l+2))
-    bytecount.append(b[0])
+        header = f.read(80)
+        numTriangles = struct.unpack("@i", f.read(4))
+        
+        triangles = [(0,0,0)]*numTriangles # prealloc, slightly faster than append
+        for i in xrange(numFacets):
+            # facet records
+            norm = struct.unpack("<3f", f.read(12))
+            vertex1 = struct.unpack("<3f", f.read(12))
+            vertex2 = struct.unpack("<3f", f.read(12))
+            vertex3 = struct.unpack("<3f", f.read(12))
+            bytecount = struct.unpack("H", f.read(2)) # not sure what this is
+            
+            triangles[i] = (norm, vertex1, vertex2, vertex3, bytecount)
+        return SolidSTL(header, numTriangles, triangles)
 
-# from (will be modified soon)
-# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
-def read_length(f):
-    length = struct.unpack("@i", f.read(4))
-    return length[0]
+    #TODO: Handle the proper exceptions
+    except Exception:
+        print "Incorrect file format"
+        pass
 
-# from (will be modified soon)
-# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
-def read_header(f):
-    f.seek(f.tell()+80)
-    
 # from (will be modified soon)
 # http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
 def write_as_ascii(outfilename):
@@ -59,21 +71,8 @@ def write_as_ascii(outfilename):
     f.write("endsolid "+outfilename+"\n")
     f.close()
 
-# from (will be modified soon)
-# http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
 def main():
-    f = open("Part1.STL", "rb")
-    
-    read_header(f)
-    l = read_length(f)
-    try:
-        while True:
-            read_triangle(f)
-    except Exception, e:
-        print "Exception ", e[0]
+    pass
 
-    print len(normals), len(points), len(triangles), 1
-    print "*"*10
-    print repr(triangles)
 if __name__ == "__main__":
     main()
