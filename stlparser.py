@@ -12,6 +12,8 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import matplotlib
 
+import sys
+
 class SolidSTL( object ):
 
     def __init__(self, title=None, numTriangles=0, triangles=None, norms=None, bytecount=None, maxLen=-1.0):
@@ -20,7 +22,8 @@ class SolidSTL( object ):
         self.triangles = triangles
         self.norms = norms
         self.bytecount = bytecount
-    
+        self.maxLen = maxLen
+
     def display(self):
         fig = plt.figure()
         ax = Axes3D(fig)
@@ -93,4 +96,6 @@ def main():
     pass
 
 if __name__ == "__main__":
-    main()
+    model = parseBSTL(sys.argv[1])
+    model.display()
+
