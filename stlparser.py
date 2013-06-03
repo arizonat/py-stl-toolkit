@@ -7,19 +7,33 @@ Help and original code from: http://stackoverflow.com/questions/7566825/python-p
 """
 
 import struct
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import matplotlib.pyplot as plt
 import matplotlib
 
 class SolidSTL( object ):
-    NORM = 0
-    VERTEX1 = 1
-    VERTEX2 = 2
-    VERTEX3 = 3
-    BYTECOUNT = 4
 
-    def __init__(self, title=None, numFacets=0, facets=None):
+    def __init__(self, title=None, numTriangles=0, triangles=None, norms=None, bytecount=None, maxLen=-1.0):
         self.title = title
-        self.numFacets = numFacets
-        self.facets = facets        
+        self.numTriangles = numTriangles
+        self.triangles = triangles
+        self.norms = norms
+        self.bytecount = bytecount
+    
+    def display(self):
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        
+        for triangle in self.triangles:
+            if self.maxLen > 0:
+                tri = []
+                for vert in triangle:
+                    tri.append(map(lambda x: x/self.maxLen, vert))
+            ax.add_collection3d(Poly3DCollection([tri]))
+        
+
+        plt.show()
 
 def parseBSTL(bstl):
     """
@@ -27,33 +41,37 @@ def parseBSTL(bstl):
     Returns a SolidSTL object
     """
 
-    try:
-        if isinstance(bstl, file):
-            f = bstl
-        elif isinstance(bstl, str):
-            f = open(bstl, 'rb')
-        else:
-            raise TypeError("must be a string or file")
+    if isinstance(bstl, file):
+        f = bstl
+    elif isinstance(bstl, str):
+        f = open(bstl, 'rb')
+    else:
+        raise TypeError("must be a string or file")
+    
+    header = f.read(80)
+    numTriangles = struct.unpack("@i", f.read(4))
+    numTriangles = numTriangles[0]
 
-        header = f.read(80)
-        numTriangles = struct.unpack("@i", f.read(4))
-        
-        triangles = [(0,0,0)]*numTriangles # prealloc, slightly faster than append
-        for i in xrange(numFacets):
-            # facet records
-            norm = struct.unpack("<3f", f.read(12))
-            vertex1 = struct.unpack("<3f", f.read(12))
-            vertex2 = struct.unpack("<3f", f.read(12))
-            vertex3 = struct.unpack("<3f", f.read(12))
-            bytecount = struct.unpack("H", f.read(2)) # not sure what this is
-            
-            triangles[i] = (norm, vertex1, vertex2, vertex3, bytecount)
-        return SolidSTL(header, numTriangles, triangles)
+    triangles = [(0,0,0)]*numTriangles # prealloc, slightly faster than append
+    norms = [(0,0,0)]*numTriangles
+    bytecounts = [(0,0,0)]*numTriangles
+    maxLen = 0.0
 
-    #TODO: Handle the proper exceptions
-    except Exception:
-        print "Incorrect file format"
-        pass
+    for i in xrange(numTriangles):
+        # facet records
+        norms[i] = struct.unpack("<3f", f.read(12))
+        vertex1 = struct.unpack("<3f", f.read(12))
+        vertex2 = struct.unpack("<3f", f.read(12))
+        vertex3 = struct.unpack("<3f", f.read(12))
+        bytecounts[i] = struct.unpack("H", f.read(2)) # not sure what this is
+
+        m = max(max(vertex1), max(vertex2), max(vertex3))
+        if m > maxLen:
+            maxLen = m
+
+        triangles[i] = (vertex1, vertex2, vertex3)
+    
+    return SolidSTL(header, numTriangles, triangles, norms, bytecounts, maxLen)
 
 # from (will be modified soon)
 # http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
