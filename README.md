@@ -13,6 +13,10 @@ or
 Prereqs:
 - matplotlib
 
+TODO:
+  - Compute the actual faces, edges, and vertices (for each triangle, find its neighbours, if the neighbour
+    shares a normal vector, then it is part of the same face)
+
 Currently supports:
 - Parsing STL binary files
 - Displaying STL binary files

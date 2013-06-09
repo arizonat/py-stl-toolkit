@@ -17,7 +17,7 @@ import sys
 
 class SolidSTL( object ):
 
-    def __init__(self, title=None, numTriangles=0, triangles=None, norms=None, bytecount=None, maxLen=-1.0, faces=None, vertices=None, edges=None):
+    def __init__(self, title=None, numTriangles=0, triangles=None, norms=None, bytecount=None, maxLen=-1.0):
         self.title = title
         self.numTriangles = numTriangles
         self.triangles = triangles
@@ -25,21 +25,64 @@ class SolidSTL( object ):
         self.bytecount = bytecount
         self.maxLen = maxLen
 
-        self.faces = faces
-        self.vertices = vertices
-        self.edges = edges
+        self.faces = None
+        self.vertices = None
+        self.edges = None
 
         # Satisfies Euler's Formula
         self.__simple = None
 
-    def computeEdges(self):
-        pass
-    
-    def computeFaces(self):
-        pass
 
-    def computeVertices(self):
-        pass
+    def getNumEdges(self):
+        return len(self.getEdges())
+
+    def getEdges(self):
+        """
+        WARNING: THIS IS THE NUMBER OF TRIANGLE EDGES, NOT THE OVERALL EDGES OF THE SOLID
+        """
+        if self.edges:
+            return self.edges
+
+        def __getSortedEdges(triangle):
+            edges = set()
+            for vertex1 in triangle:
+                for vertex2 in triangle:
+                    if not vertex1 == vertex2:
+                        edge = ((vertex1, vertex2), (vertex2, vertex1))[vertex1 > vertex2]
+                        edges.add(edge)
+            return edges
+
+        self.edges = set()
+        for triangle in self.triangles:
+            tri_edges = __getSortedEdges(triangle)
+            self.edges.union(tri_edges)
+        
+        return self.edges
+    
+    def getFaces(self):
+        """
+        WARNING: THIS IS THE NUMBER OF TRIANGLE EDGES, NOT THE OVERALL EDGES OF THE SOLID
+        """
+
+        return self.triangles
+
+    def getNumVertices(self):
+        return len(self.getVertices())
+
+    def getVertices(self):
+        """
+        WARNING: THIS IS THE NUMBER OF TRIANGLE EDGES, NOT THE OVERALL EDGES OF THE SOLID
+        """
+
+        if self.vertices:
+            return self.vertices
+        
+        self.vertices = set()
+        for triangle in self.triangles:
+            for vertex in triangle:
+                self.vertices.add(vertex)
+
+        return self.vertices
 
     def isSimple(self):
         """
