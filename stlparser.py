@@ -29,10 +29,6 @@ class SolidSTL( object ):
         self.vertices = None
         self.edges = None
 
-        # Satisfies Euler's Formula
-        self.__simple = None
-
-
     def getNumEdges(self):
         return len(self.getEdges())
 
@@ -43,7 +39,7 @@ class SolidSTL( object ):
         if self.edges:
             return self.edges
 
-        def __getSortedEdges(triangle):
+        def getSortedEdges(triangle):
             edges = set()
             for vertex1 in triangle:
                 for vertex2 in triangle:
@@ -54,8 +50,9 @@ class SolidSTL( object ):
 
         self.edges = set()
         for triangle in self.triangles:
-            tri_edges = __getSortedEdges(triangle)
-            self.edges.union(tri_edges)
+            tri_edges = getSortedEdges(triangle)
+            print str(tri_edges)
+            self.edges.update(tri_edges)
         
         return self.edges
     
@@ -75,7 +72,6 @@ class SolidSTL( object ):
         """
         WARNING: THIS IS THE NUMBER OF TRIANGLE EDGES, NOT THE OVERALL EDGES OF THE SOLID
         """
-
         if self.vertices:
             return self.vertices
         
@@ -93,7 +89,10 @@ class SolidSTL( object ):
         
         In short, verifies: V - E + F = 2
         """
-        pass
+        V = self.getNumVertices()
+        E = self.getNumEdges()
+        F = self.getNumFaces()
+        return V - E + F == 2
 
     def display(self):
         fig = plt.figure()
