@@ -59,11 +59,13 @@ class SolidSTL( object ):
         
         return self.edges
     
+    def getNumFaces(self):
+        return len(self.getFaces())
+
     def getFaces(self):
         """
         WARNING: THIS IS THE NUMBER OF TRIANGLE EDGES, NOT THE OVERALL EDGES OF THE SOLID
         """
-
         return self.triangles
 
     def getNumVertices(self):
