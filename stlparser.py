@@ -11,12 +11,13 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import matplotlib
+import numpy as np
 
 import sys
 
 class SolidSTL( object ):
 
-    def __init__(self, title=None, numTriangles=0, triangles=None, norms=None, bytecount=None, maxLen=-1.0):
+    def __init__(self, title=None, numTriangles=0, triangles=None, norms=None, bytecount=None, maxLen=-1.0, faces=None, vertices=None, edges=None):
         self.title = title
         self.numTriangles = numTriangles
         self.triangles = triangles
@@ -24,18 +25,57 @@ class SolidSTL( object ):
         self.bytecount = bytecount
         self.maxLen = maxLen
 
+        self.faces = faces
+        self.vertices = vertices
+        self.edges = edges
+
+        # Satisfies Euler's Formula
+        self.__simple = None
+
+    def computeEdges(self):
+        pass
+    
+    def computeFaces(self):
+        pass
+
+    def computeVertices(self):
+        pass
+
+    def isSimple(self):
+        """
+        Uses Euler's formula for polyhedron's to determine if the 
+        solid is simple (has no "holes" and is convex)
+        
+        In short, verifies: V - E + F = 2
+        """
+        pass
+
     def display(self):
         fig = plt.figure()
-        ax = Axes3D(fig)
-        
-        for triangle in self.triangles:
+        #ax = Axes3D(fig)
+        ax = fig.gca(projection='3d')
+
+        for i in xrange(len(self.triangles)):
+            
+            triangle = self.triangles[i]
+
             if self.maxLen > 0:
                 tri = []
                 for vert in triangle:
                     tri.append(map(lambda x: x/self.maxLen, vert))
-            ax.add_collection3d(Poly3DCollection([tri]))
-        
+            else:
+                tri = triangle
+            
+            face = Poly3DCollection([tri])
+            face.set_alpha(0.5)
+            ax.add_collection3d(face)
+            
+            x = np.linspace(0,1,10)
+            y = np.linspace(0,0,10)
+            z = np.linspace(0,0,10)
 
+            ax.plot(x, y, z)
+            
         plt.show()
 
 def parseBSTL(bstl):
