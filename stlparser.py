@@ -101,12 +101,14 @@ class SolidSTL( object ):
         #ax = Axes3D(fig)
         ax = fig.gca(projection='3d')
 
-        def __getNormalLine(origin, vector):
+        def __getNormalLine(origin, vector, scale=1.0):
             """
             Returns a plottable line represented by a 3-tuple where each element is an array
             for a single axis. First element is all x-coordinates, second is all y-coordinates, etc...
             """
-            return tuple([np.linspace(start, stop, 10) for start, stop in zip(origin, vector)])
+            vector = np.array(vector) * scale
+            endpoint = tuple([sum(el) for el in zip(origin, vector)])
+            return tuple([np.linspace(start, stop, 10) for start, stop in zip(origin, endpoint)])
 
         def __getCentroid(triangle):
             """
@@ -135,7 +137,7 @@ class SolidSTL( object ):
             
             centroid = __getCentroid(triangle)
             norm = self.norms[i]
-            xs, ys, zs = __getNormalLine(centroid, norm)
+            xs, ys, zs = __getNormalLine(centroid, norm, 10)
             ax.plot(xs, ys, zs)
 
         plt.show()
