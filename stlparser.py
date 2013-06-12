@@ -99,27 +99,37 @@ class SolidSTL( object ):
         #ax = Axes3D(fig)
         ax = fig.gca(projection='3d')
 
+        def __getNormalLine(origin, vector):
+            return tuple([np.linspace(start, stop, 10) for start, stop in zip(origin, vector)])
+
+        def __getCentroid(triangle):
+            # group the xs, ys, and zs
+            coordGroups = zip(triangle[0], triangle[1], triangle[2])
+            centroid = tuple([sum(coordGroup)/3.0 for coordGroup in coordGroups])
+            return centroid
+
         for i in xrange(len(self.triangles)):
             
             triangle = self.triangles[i]
-
-            if self.maxLen > 0:
-                tri = []
-                for vert in triangle:
-                    tri.append(map(lambda x: x/self.maxLen, vert))
-            else:
-                tri = triangle
             
-            face = Poly3DCollection([tri])
+            #self.maxLen = -1
+            #if self.maxLen > 0:
+            #    tri = []
+            #    for vert in triangle:
+            #        tri.append(map(lambda x: x/self.maxLen, vert))
+            #else:
+            #    tri = triangle
+            
+            face = Poly3DCollection([triangle])
             face.set_alpha(0.5)
             ax.add_collection3d(face)
             
-            x = np.linspace(0,1,10)
-            y = np.linspace(0,0,10)
-            z = np.linspace(0,0,10)
+            centroid = __getCentroid(triangle)
+            print str(centroid)
+            norm = self.norms[i]
+            xs, ys, zs = __getNormalLine(centroid, norm)
+            ax.plot(xs, ys, zs)
 
-            ax.plot(x, y, z)
-            
         plt.show()
 
 def parseBSTL(bstl):
