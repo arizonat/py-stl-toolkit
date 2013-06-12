@@ -82,9 +82,9 @@ def isSimple(stlsolid):
     if not isinstance(stlsolid, SolidSTL):
         raise TypeError("Incorrect type, expected stlparser.SolidSTL")
 
-    V = len(stl.getVertices())
-    E = len(stl.getNumEdges())
-    F = len(stl.getNumFaces())
+    V = len(stlsolid.getVertices())
+    E = len(stlsolid.getNumEdges())
+    F = len(stlsolid.getNumFaces())
     return V - E + F == 2
     
 def __getNormalLine(origin, vector, scale=1.0):
