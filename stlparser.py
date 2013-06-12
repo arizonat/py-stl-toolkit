@@ -17,20 +17,16 @@ import sys
 
 class SolidSTL( object ):
 
-    def __init__(self, title=None, numTriangles=0, triangles=None, norms=None, bytecount=None, maxLen=-1.0):
+    def __init__(self, title=None, numTriangles=0, triangles=None, norms=None, bytecount=None):
         self.title = title
         self.numTriangles = numTriangles
         self.triangles = triangles
         self.norms = norms
         self.bytecount = bytecount
-        self.maxLen = maxLen
 
         self.faces = None
         self.vertices = None
         self.edges = None
-
-    def getNumEdges(self):
-        return len(self.getEdges())
 
     def getEdges(self):
         """
@@ -55,17 +51,11 @@ class SolidSTL( object ):
         
         return self.edges
     
-    def getNumFaces(self):
-        return len(self.getFaces())
-
     def getFaces(self):
         """
         WARNING: THIS IS THE NUMBER OF TRIANGLE EDGES, NOT THE OVERALL EDGES OF THE SOLID
         """
         return self.triangles
-
-    def getNumVertices(self):
-        return len(self.getVertices())
 
     def getVertices(self):
         """
@@ -81,68 +71,67 @@ class SolidSTL( object ):
 
         return self.vertices
 
-    def isSimple(self):
-        """
-        Uses Euler's formula for polyhedron's to determine if the 
-        solid is simple (has no "holes" and is convex)
+def isSimple(stlsolid):
+    """
+    Uses Euler's formula for polyhedron's to determine if the 
+    solid is simple (has no "holes" and is convex)
+    
+    In short, verifies: V - E + F = 2
+    """
+    
+    if not isinstance(stlsolid, SolidSTL):
+        raise TypeError("Incorrect type, expected stlparser.SolidSTL")
+
+    V = len(stl.getVertices())
+    E = len(stl.getNumEdges())
+    F = len(stl.getNumFaces())
+    return V - E + F == 2
+    
+def __getNormalLine(origin, vector, scale=1.0):
+    """
+    Returns a plottable line represented by a 3-tuple where each element is an array
+    for a single axis. First element is all x-coordinates, second is all y-coordinates, etc...
+    """
+    vector = np.array(vector) * scale
+    endpoint = tuple([sum(el) for el in zip(origin, vector)])
+    return tuple([np.linspace(start, stop, 10) for start, stop in zip(origin, endpoint)])
+
+def __getTriangleCentroid(triangle):
+    """
+    Returns the centroid of a triangle in 3D-space
+    """
+    # group the xs, ys, and zs
+    coordGroups = zip(triangle[0], triangle[1], triangle[2])
+    centroid = tuple([sum(coordGroup)/3.0 for coordGroup in coordGroups])
+    return centroid
+    
+def display(stlsolid, showNorms=True):
+    """
+    Renders the solid and normal vectors using matplotlib
+    """
+    fig = plt.figure()
+    #ax = Axes3D(fig)
+    ax = fig.gca(projection='3d')
+    
+    triangles = stlsolid.triangles
+    norms = stlsolid.norms
+
+    for i in xrange(len(triangles)):
+            
+        triangle = triangles[i]
         
-        In short, verifies: V - E + F = 2
-        """
-        V = self.getNumVertices()
-        E = self.getNumEdges()
-        F = self.getNumFaces()
-        return V - E + F == 2
+        face = Poly3DCollection([triangle])
+        face.set_alpha(0.5)
+        ax.add_collection3d(face)
+        
+        centroid = __getTriangleCentroid(triangle)
+        norm = norms[i]
+        xs, ys, zs = __getNormalLine(centroid, norm, 10)
+        ax.plot(xs, ys, zs)
 
-    def display(self):
-        """
-        Renders the solid and normal vectors using matplotlib
-        """
-        fig = plt.figure()
-        #ax = Axes3D(fig)
-        ax = fig.gca(projection='3d')
+    plt.show()
 
-        def __getNormalLine(origin, vector, scale=1.0):
-            """
-            Returns a plottable line represented by a 3-tuple where each element is an array
-            for a single axis. First element is all x-coordinates, second is all y-coordinates, etc...
-            """
-            vector = np.array(vector) * scale
-            endpoint = tuple([sum(el) for el in zip(origin, vector)])
-            return tuple([np.linspace(start, stop, 10) for start, stop in zip(origin, endpoint)])
-
-        def __getCentroid(triangle):
-            """
-            Returns the centroid of a triangle in 3D-space
-            """
-            # group the xs, ys, and zs
-            coordGroups = zip(triangle[0], triangle[1], triangle[2])
-            centroid = tuple([sum(coordGroup)/3.0 for coordGroup in coordGroups])
-            return centroid
-
-        for i in xrange(len(self.triangles)):
-            
-            triangle = self.triangles[i]
-            
-            #self.maxLen = -1
-            #if self.maxLen > 0:
-            #    tri = []
-            #    for vert in triangle:
-            #        tri.append(map(lambda x: x/self.maxLen, vert))
-            #else:
-            #    tri = triangle
-            
-            face = Poly3DCollection([triangle])
-            face.set_alpha(0.5)
-            ax.add_collection3d(face)
-            
-            centroid = __getCentroid(triangle)
-            norm = self.norms[i]
-            xs, ys, zs = __getNormalLine(centroid, norm, 10)
-            ax.plot(xs, ys, zs)
-
-        plt.show()
-
-def parseBSTL(bstl):
+def loadBSTL(bstl):
     """
     Loads triangles from file, input can be a file path or a file handler
     Returns a SolidSTL object
@@ -182,22 +171,31 @@ def parseBSTL(bstl):
 
 # from (will be modified soon)
 # http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
-def write_as_ascii(outfilename):
-    f = open(outfilename, "w")
-    f.write("solid "+outfilename+"\n")
-    for n in range(len(triangles)):
-        f.write("facet normal {}{}{}\n".format(normals[n][0], normals[n][1], normals[n][2]))
-        f.write("outer loop\n")
-        f.write("vertex {} {} {}\n".format())
-        f.write("vertex {} {} {}\n".format())
-        f.write("vertex {} {} {}\n".format())
-        f.write("endloop\n")
-        f.write("endfacet\n")
-    f.write("endsolid "+outfilename+"\n")
-    f.close()
+def saveSTL(stlsolid, outfilename):
+    """
+    Saves the solid in standard STL format
+    """
 
-def main():
-    pass
+    if not isinstance(stlsolid, SolidSTL):
+        raise TypeError("Must be of type SolidSTL")
+
+    triangles = stlsolid.triangles
+    norms = stlsolid.norms
+
+    with open(outfilename, "w") as f:
+
+        f.write("solid "+outfilename+"\n")
+        for i in xrange(len(triangles)):
+            norm = norms[i]
+            triangle = triangles[i]
+            f.write("facet normal %f %f %f\n"%(norm)
+            f.write("outer loop\n")
+            f.write("vertex %f %f %f\n"%triangle[0]
+            f.write("vertex %f %f %f\n"%triangle[1]
+            f.write("vertex %f %f %f\n"%triangle[2]
+            f.write("endloop\n")
+            f.write("endfacet\n")
+        f.write("endsolid "+outfilename+"\n")
 
 if __name__ == "__main__":
     model = parseBSTL(sys.argv[1])
