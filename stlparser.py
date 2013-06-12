@@ -51,7 +51,6 @@ class SolidSTL( object ):
         self.edges = set()
         for triangle in self.triangles:
             tri_edges = getSortedEdges(triangle)
-            print str(tri_edges)
             self.edges.update(tri_edges)
         
         return self.edges
@@ -95,14 +94,24 @@ class SolidSTL( object ):
         return V - E + F == 2
 
     def display(self):
+        """
+        Renders the solid and normal vectors using matplotlib
+        """
         fig = plt.figure()
         #ax = Axes3D(fig)
         ax = fig.gca(projection='3d')
 
         def __getNormalLine(origin, vector):
+            """
+            Returns a plottable line represented by a 3-tuple where each element is an array
+            for a single axis. First element is all x-coordinates, second is all y-coordinates, etc...
+            """
             return tuple([np.linspace(start, stop, 10) for start, stop in zip(origin, vector)])
 
         def __getCentroid(triangle):
+            """
+            Returns the centroid of a triangle in 3D-space
+            """
             # group the xs, ys, and zs
             coordGroups = zip(triangle[0], triangle[1], triangle[2])
             centroid = tuple([sum(coordGroup)/3.0 for coordGroup in coordGroups])
@@ -125,7 +134,6 @@ class SolidSTL( object ):
             ax.add_collection3d(face)
             
             centroid = __getCentroid(triangle)
-            print str(centroid)
             norm = self.norms[i]
             xs, ys, zs = __getNormalLine(centroid, norm)
             ax.plot(xs, ys, zs)
