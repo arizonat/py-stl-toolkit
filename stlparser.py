@@ -151,7 +151,6 @@ def loadBSTL(bstl):
     triangles = [(0,0,0)]*numTriangles # prealloc, slightly faster than append
     norms = [(0,0,0)]*numTriangles
     bytecounts = [(0,0,0)]*numTriangles
-    maxLen = 0.0
 
     for i in xrange(numTriangles):
         # facet records
@@ -161,13 +160,9 @@ def loadBSTL(bstl):
         vertex3 = struct.unpack("<3f", f.read(12))
         bytecounts[i] = struct.unpack("H", f.read(2)) # not sure what this is
 
-        m = max(max(vertex1), max(vertex2), max(vertex3))
-        if m > maxLen:
-            maxLen = m
-
         triangles[i] = (vertex1, vertex2, vertex3)
     
-    return SolidSTL(header, numTriangles, triangles, norms, bytecounts, maxLen)
+    return SolidSTL(header, numTriangles, triangles, norms, bytecounts)
 
 # from (will be modified soon)
 # http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
@@ -188,11 +183,11 @@ def saveSTL(stlsolid, outfilename):
         for i in xrange(len(triangles)):
             norm = norms[i]
             triangle = triangles[i]
-            f.write("facet normal %f %f %f\n"%(norm)
+            f.write("facet normal %f %f %f\n"%(norm))
             f.write("outer loop\n")
-            f.write("vertex %f %f %f\n"%triangle[0]
-            f.write("vertex %f %f %f\n"%triangle[1]
-            f.write("vertex %f %f %f\n"%triangle[2]
+            f.write("vertex %f %f %f\n"%triangle[0])
+            f.write("vertex %f %f %f\n"%triangle[1])
+            f.write("vertex %f %f %f\n"%triangle[2])
             f.write("endloop\n")
             f.write("endfacet\n")
         f.write("endsolid "+outfilename+"\n")
