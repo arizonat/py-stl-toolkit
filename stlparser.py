@@ -71,6 +71,22 @@ class SolidSTL( object ):
 
         return self.vertices
 
+def addCuboidSupport(stlsolid, triangle):
+    pass
+
+def addCuboidSupports(stlsolid, area=1.0, minHeight=1.0):
+    # iterate through each triangle
+    
+    # add a line from each negative z-normal to the base
+
+    pass
+
+def rotate(theta, axis="x", units="degrees"):
+    pass
+
+def stretch():
+    pass
+
 def isSimple(stlsolid):
     """
     Uses Euler's formula for polyhedron's to determine if the 
@@ -83,8 +99,8 @@ def isSimple(stlsolid):
         raise TypeError("Incorrect type, expected stlparser.SolidSTL")
 
     V = len(stlsolid.getVertices())
-    E = len(stlsolid.getNumEdges())
-    F = len(stlsolid.getNumFaces())
+    E = len(stlsolid.getEdges())
+    F = len(stlsolid.getFaces())
     return V - E + F == 2
     
 def __getNormalLine(origin, vector, scale=1.0):
@@ -104,8 +120,17 @@ def __getTriangleCentroid(triangle):
     coordGroups = zip(triangle[0], triangle[1], triangle[2])
     centroid = tuple([sum(coordGroup)/3.0 for coordGroup in coordGroups])
     return centroid
+
+def __getSupportDirection(origin, vector, scale=1.0):
+    z = vector[2]
     
-def display(stlsolid, showNorms=True):
+    if z < 0:
+        down = [0, 0, -1]
+        return __getNormalLine(origin, down, scale)
+    # Does not require support material, don't plot anything
+    return ([],[],[])
+    
+def display(stlsolid, showNorms=False, showSupportDirections=True):
     """
     Renders the solid and normal vectors using matplotlib
     """
@@ -123,11 +148,18 @@ def display(stlsolid, showNorms=True):
         face = Poly3DCollection([triangle])
         face.set_alpha(0.5)
         ax.add_collection3d(face)
+
+        if showNorms or showSupportDirections:
+            centroid = __getTriangleCentroid(triangle)
+            norm = norms[i]
         
-        centroid = __getTriangleCentroid(triangle)
-        norm = norms[i]
-        xs, ys, zs = __getNormalLine(centroid, norm, 10)
-        ax.plot(xs, ys, zs)
+            if showNorms:
+                xs, ys, zs = __getNormalLine(centroid, norm, 10)
+                ax.plot(xs, ys, zs)
+
+            if showSupportDirections:
+                xs, ys, zs = __getSupportDirection(centroid, norm, 10)
+                ax.plot(xs, ys, zs)
 
     plt.show()
 
