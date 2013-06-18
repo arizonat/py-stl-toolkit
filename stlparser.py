@@ -12,10 +12,12 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
-
 import sys
 
-class SolidSTL( object ):
+SCALE_INCH = 1.0
+SCALE_CM = 1.0
+
+class SolidSTL(object):
 
     def __init__(self, title=None, numTriangles=0, triangles=None, norms=None, bytecount=None):
         self.title = title
@@ -77,7 +79,7 @@ def addCuboidSupport(stlsolid, triangle):
 def addCuboidSupports(stlsolid, area=1.0, minHeight=1.0):
     # iterate through each triangle
     
-    # add a line from each negative z-normal to the base
+    # add a cuboid from each negative z-normal to the base
 
     pass
 

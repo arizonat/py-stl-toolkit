@@ -3,23 +3,26 @@ STL files. Specifically useful for 3D printing jobs.
 
 Example Usage:
 > python 
->>> import stlparser
->>> stlmodel = stlparser.parseBSTL("Part1.STL")
->>> stlmodel.display()
-
-or
-> python stlparser Part1.STL
+>> import stlparser
+>> stlmodel = stlparser.parseBSTL("demoparts/holeT.STL")
+>> stlparser.display(stlmodel)
+>> stlparser.isSimple(stlmodel)
 
 Prereqs:
+- python2.7
 - matplotlib
+- numpy
 
 TODO:
-  - Compute the actual faces, edges, and vertices (for each triangle, find its neighbours, if the neighbour
+  - Add supports to a particular triangle
+  - Add supports to a particular conglomerate face
+  - Conglomerate triangles to faces(for each triangle, find its neighbours, if the neighbour
     shares a normal vector, then it is part of the same face)
+  - Check if saving works properly
+  - Save in BSTL instead of STL
+  - Parse normal STL
 
 Currently supports:
 - Parsing STL binary files
 - Displaying STL binary files
-
-Known Issues:
-- Display axes are all wrong
+- Displaying possible support directions
