@@ -2,12 +2,13 @@ This python package is used for parsing, displaying, and post-processing of
 STL files. Specifically useful for 3D printing jobs.
 
 Example Usage:
-> import stlparser
-> stlmodel = stlparser.parseBSTL("demoparts/angleT.STL")
-> stlmodel.__shiftUp(5)
-> stlparser.addCuboidSupports(stlmodel)
-> stlparser.display(stlmodel, showNorms=True)
-> stlparser.isSimple(stlmodel)
+
+import stlparser
+stlmodel = stlparser.parseBSTL("demoparts/angleT.STL")
+stlmodel.__shiftUp(5)
+stlparser.addCuboidSupports(stlmodel)
+stlparser.display(stlmodel, showNorms=True)
+stlparser.isSimple(stlmodel)
 
 Prereqs:
   - python2.7
