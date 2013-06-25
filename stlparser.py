@@ -14,34 +14,57 @@ import matplotlib
 import numpy as np
 import sys
 
+#TODO: Figure out what these values are
 SCALE_INCH = 1.0
 SCALE_CM = 1.0
 
+SQRT_TWO = 1.41421356237
+
 class SolidSTL(object):
 
-    def __init__(self, title=None, numTriangles=0, triangles=None, norms=None, bytecount=None):
+    def __init__(self, title=None, triangles=None, norms=None, bytecount=None):
+
+        if not triangles:
+            triangles = []
+
+        if not norms:
+            norms = []
+            
         self.title = title
-        self.numTriangles = numTriangles
         self.triangles = triangles
         self.norms = norms
         self.bytecount = bytecount
 
-        self.faces = None
-        self.vertices = None
-        self.edges = None
+        self.faces = self.__getFaces()
+        self.vertices = self.__getVertices()
+        self.edges = self.__getEdges()
 
-    def getEdges(self):
+    def mergeSolid(self, stlsolid):
+        self.addTriangles(stlsolid.triangles, stlsolid.norms)
+
+    def addTriangles(self, triangles, norms):
+        self.triangles.extend(triangles)
+        self.norms.extend(norms)
+        
+        # Update all the values
+        self.faces = self.__getFaces()
+        self.vertices = self.__getVertices()
+        self.edges = self.__getEdges()
+
+    def iterTriangles(self):
+        for i in xrange(len(self.triangles)):
+            yield self.triangles[i], self.norms[i]
+
+    def __getEdges(self):
         """
         WARNING: THIS IS THE NUMBER OF TRIANGLE EDGES, NOT THE OVERALL EDGES OF THE SOLID
         """
-        if self.edges:
-            return self.edges
-
         def getSortedEdges(triangle):
             edges = set()
             for vertex1 in triangle:
                 for vertex2 in triangle:
                     if not vertex1 == vertex2:
+                        # lexicographical comparison
                         edge = ((vertex1, vertex2), (vertex2, vertex1))[vertex1 > vertex2]
                         edges.add(edge)
             return edges
@@ -53,19 +76,16 @@ class SolidSTL(object):
         
         return self.edges
     
-    def getFaces(self):
+    def __getFaces(self):
         """
         WARNING: THIS IS THE NUMBER OF TRIANGLE EDGES, NOT THE OVERALL EDGES OF THE SOLID
         """
         return self.triangles
 
-    def getVertices(self):
+    def __getVertices(self):
         """
         WARNING: THIS IS THE NUMBER OF TRIANGLE EDGES, NOT THE OVERALL EDGES OF THE SOLID
         """
-        if self.vertices:
-            return self.vertices
-        
         self.vertices = set()
         for triangle in self.triangles:
             for vertex in triangle:
@@ -73,15 +93,66 @@ class SolidSTL(object):
 
         return self.vertices
 
-def addCuboidSupport(stlsolid, triangle):
-    pass
+def createVerticalCuboid(topPoint, edgeLength=1.0):
+    """
+    Creates a cuboid structure, with triangles,
+    the tops and bottoms of the cuboid will be removed,
+    the sides of the top and bottom surfaces are parallel with the X-Y axes
+    """
+    #WARNING: The order that these points are created and listed matter
+    # so that normals can be computed in the proper direction
 
-def addCuboidSupports(stlsolid, area=1.0, minHeight=1.0):
-    # iterate through each triangle
+    # create the 8 points
+    e2 = edgeLength/2.0
+    point = np.array(topPoint)
+    topSurface = np.array([
+            point + [-e2, e2, 0],
+            point + [e2, e2, 0],
+            point + [e2, -e2, 0],
+            point + [-e2, -e2, 0]
+            ])
+
+    bottomMask = np.tile( [1,1,0], [4,1] )    
+    bottomSurface = np.multiply(bottomMask, topSurface)
+
+    topSurface = map(lambda x: tuple(x), topSurface)
+    bottomSurface = map(lambda x: tuple(x), bottomSurface)
     
-    # add a cuboid from each negative z-normal to the base
+    # join the 8 points as 8 triangles
+    triangles = []
+    for i in xrange(len(topSurface)):
+        # These must be listed in clockwise fashion in relation to the face's normal, using the RHR
+        triangles.append( (topSurface[i], bottomSurface[i], bottomSurface[(i+1) % 4]) )
+        triangles.append( (bottomSurface[(i+1) % 4], topSurface[(i+1) % 4], topSurface[i]) )
+    
+    # convert to tuples
+    triangles = map(lambda x: tuple(x), triangles)
 
-    pass
+    # compute the normals
+    norms = []
+    for triangle in triangles:
+        norms.append(__computeTriangleNormal(triangle))
+    
+    return (triangles, norms)
+
+def __computeTriangleNormal(triangle):
+    """
+    Uses the cross product of the vectors formed by the triangle's vertices
+    """
+    vec1 = np.array(triangle[0]) - np.array(triangle[1])
+    vec2 = np.array(triangle[2]) - np.array(triangle[1])
+    return np.cross(vec1, vec2)
+
+def addCuboidSupports(stlsolid, area=1.0):
+
+    # iterate through each triangle and add supports to the stlsolid
+    for triangle, norm in stlsolid.iterTriangles():
+        centroid = __getTriangleCentroid(triangle)
+        supportDirs = __getSupportDirection(centroid, norm, 10)
+        
+        if not supportDirs is None:
+            triangles, norms = createVerticalCuboid(centroid)
+            stlsolid.addTriangles(triangles, norms)
 
 def rotate(theta, axis="x", units="degrees"):
     pass
@@ -100,9 +171,9 @@ def isSimple(stlsolid):
     if not isinstance(stlsolid, SolidSTL):
         raise TypeError("Incorrect type, expected stlparser.SolidSTL")
 
-    V = len(stlsolid.getVertices())
-    E = len(stlsolid.getEdges())
-    F = len(stlsolid.getFaces())
+    V = len(stlsolid.vertices)
+    E = len(stlsolid.edges)
+    F = len(stlsolid.faces)
     return V - E + F == 2
     
 def __getNormalLine(origin, vector, scale=1.0):
@@ -130,7 +201,7 @@ def __getSupportDirection(origin, vector, scale=1.0):
         down = [0, 0, -1]
         return __getNormalLine(origin, down, scale)
     # Does not require support material, don't plot anything
-    return ([],[],[])
+    return None
     
 def display(stlsolid, showNorms=False, showSupportDirections=True):
     """
@@ -160,8 +231,10 @@ def display(stlsolid, showNorms=False, showSupportDirections=True):
                 ax.plot(xs, ys, zs)
 
             if showSupportDirections:
-                xs, ys, zs = __getSupportDirection(centroid, norm, 10)
-                ax.plot(xs, ys, zs)
+                supportDirs = __getSupportDirection(centroid, norm, 10)
+                if not supportDirs is None:
+                    xs, ys, zs = supportDirs
+                    ax.plot(xs, ys, zs)
 
     plt.show()
 
@@ -196,7 +269,22 @@ def loadBSTL(bstl):
 
         triangles[i] = (vertex1, vertex2, vertex3)
     
-    return SolidSTL(header, numTriangles, triangles, norms, bytecounts)
+    return SolidSTL(header, triangles, norms, bytecounts)
+
+def __shiftUp(stlsolid, amt=5.0):
+    """
+    This is purely for testing purposes (force a situation where supports are needed),
+    not really sure why anybody would actually use this
+    """
+    for i in xrange(len(stlsolid.triangles)):
+        triangle = list(stlsolid.triangles[i])
+
+        for v in xrange(len(triangle)):
+            triangle[v] = list(triangle[v])
+            triangle[v][2] += amt
+            triangle[v] = tuple(triangle[v])
+
+        stlsolid.triangles[i] = tuple(triangle)
 
 # from (will be modified soon)
 # http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
