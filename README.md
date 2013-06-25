@@ -3,7 +3,7 @@ STL files. Specifically useful for 3D printing jobs.
 
 Example Usage:
 
-import stlparser
+    import stlparser
     stlmodel = stlparser.parseBSTL("demoparts/angleT.STL")
     stlmodel.__shiftUp(5)
     stlparser.addCuboidSupports(stlmodel)
