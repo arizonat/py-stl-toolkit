@@ -203,7 +203,7 @@ def __getSupportDirection(origin, vector, scale=1.0):
     # Does not require support material, don't plot anything
     return None
     
-def display(stlsolid, showNorms=False, showSupportDirections=True):
+def display(stlsolid, showNorms=False, showSupportDirections=False):
     """
     Renders the solid and normal vectors using matplotlib
     """
@@ -315,6 +315,8 @@ def saveSTL(stlsolid, outfilename):
         f.write("endsolid "+outfilename+"\n")
 
 if __name__ == "__main__":
-    model = parseBSTL(sys.argv[1])
-    model.display()
+    model = loadBSTL(sys.argv[1])
+    __shiftUp(model,5)
+    addCuboidSupports(model)
+    display(model)
 
