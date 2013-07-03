@@ -1,3 +1,5 @@
+#!/usr/bin/python2.7
+
 """
 This module provides basic STL parsing, saving, displaying, and post-processing capabilities
 
@@ -141,7 +143,7 @@ def __computeTriangleNormal(triangle):
     """
     vec1 = np.array(triangle[0]) - np.array(triangle[1])
     vec2 = np.array(triangle[2]) - np.array(triangle[1])
-    return np.cross(vec1, vec2)
+    return tuple(np.cross(vec1, vec2))
 
 def addCuboidSupports(stlsolid, area=1.0):
 
@@ -203,7 +205,7 @@ def __getSupportDirection(origin, vector, scale=1.0):
     # Does not require support material, don't plot anything
     return None
     
-def display(stlsolid, showNorms=False, showSupportDirections=False):
+def display(stlsolid, showNorms=True, showSupportDirections=False):
     """
     Renders the solid and normal vectors using matplotlib
     """
@@ -285,6 +287,47 @@ def __shiftUp(stlsolid, amt=5.0):
             triangle[v] = tuple(triangle[v])
 
         stlsolid.triangles[i] = tuple(triangle)
+
+def loadSTL(infilename):
+
+    with open(infilename,'r') as f:
+        name = f.readline().split()
+        if not name[0] == "solid":
+            raise IOError("Expecting first input as \"solid\" [name]")
+        
+        if len(name) == 2:
+            title = name[1]
+        elif len(name) == 1:
+            title = None
+        else:
+            raise IOError("Too many inputs to first line")
+        
+        triangles = []
+        norms = []
+
+        for line in f:
+            params = line.split()
+            cmd = params[0]
+            if cmd == "endsolid":
+                if name and params[1] == name:
+                    break
+                else: #TODO: inform that name needs to be there
+                    break
+            elif cmd == "facet":
+                norm = map(float, params[2:5])
+                norms.append(tuple(norm))
+            elif cmd == "outer":
+                triangle = []
+            elif cmd == "vertex":
+                vertex = map(float, params[1:4])
+                triangle.append(tuple(vertex))
+            elif cmd == "endloop":
+                continue
+            elif cmd == "endfacet":
+                triangles.append(tuple(triangle)) #TODO: Check IO formatting
+                triangle = []
+
+        return SolidSTL(title, triangles, norms)
 
 # from (will be modified soon)
 # http://stackoverflow.com/questions/7566825/python-parsing-binary-stl-file    
