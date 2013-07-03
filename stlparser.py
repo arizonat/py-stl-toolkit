@@ -219,7 +219,7 @@ def display(stlsolid, showNorms=True, showSupportDirections=False):
     for i in xrange(len(triangles)):
             
         triangle = triangles[i]
-        
+       
         face = Poly3DCollection([triangle])
         face.set_alpha(0.5)
         ax.add_collection3d(face)

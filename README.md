@@ -17,15 +17,16 @@ Prereqs:
 
 Currently supports:
   - Parsing STL binary files
-  - Displaying STL binary files
+  - Parsing STL normal files
+  - Displaying STL solids
   - Displaying possible support directions
-  - Adding cuboid supports (can only do perfectly flat faces currently)
+  - Adding cuboid supports at all triangle locations that need them (can only do perfectly flat faces currently)
+  - Save to new STL files
 
 TODO:
   - Add supports for angled faces
   - Add supports to a particular conglomerate face
   - Conglomerate triangles to faces(for each triangle, find its neighbours, if the neighbour
     shares a normal vector, then it is part of the same face)
-  - Check if saving works properly
   - Save in BSTL instead of STL
-  - Parse normal STL
+
