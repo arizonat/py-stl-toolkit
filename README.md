@@ -5,7 +5,7 @@ Example Usage:
 
     import stlparser
     stlmodel = stlparser.parseBSTL("demoparts/angleT.STL")
-    stlmodel.__shiftUp(5)
+    stlparser.__shiftUp(stlmodel,5)
     stlparser.addCuboidSupports(stlmodel)
     stlparser.display(stlmodel, showNorms=True)
     stlparser.isSimple(stlmodel)
